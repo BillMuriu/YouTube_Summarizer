@@ -14,14 +14,20 @@ def apiOverview(request):
     }
     return Response(api_urls)
 
-@api_view(['POST', 'GET'])
+@api_view(['POST'])
 def openai_api(request):
     prompt = request.data.get('prompt')
     # replace 'YOUR_API_KEY' with your actual OpenAI API key
     openai.api_key = ''
     response = openai.Completion.create(
-        engine='davinci',
+        model="text-davinci-003",
         prompt=prompt,
-        max_tokens=60
+        temperature=0.7,
+        max_tokens=256,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0
     )
-    return Response({'text': response.choices[0].text})
+
+    text = response.choices[0].text
+    return Response({'text': text})
