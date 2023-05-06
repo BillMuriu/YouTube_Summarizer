@@ -1,12 +1,10 @@
 import openai
 from django.shortcuts import render
 from django.http import JsonResponse
-
-
 from langchain.document_loaders import YoutubeLoader
 from langchain.llms import OpenAI
 from langchain.chains.summarize import load_summarize_chain
-
+from youtube_transcript_api import YouTubeTranscriptApi
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
@@ -19,30 +17,41 @@ def apiOverview(request):
     }
     return Response(api_urls)
 
-# @api_view(['POST'])
-# def openai_api(request):
-#     prompt = request.data.get('prompt')
-#     openai.api_key = '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'
-#     response = openai.Completion.create(
-#         model="text-davinci-003",
-#         prompt=prompt,
-#         temperature=0.7,
-#         max_tokens=256,
-#         top_p=1,
-#         frequency_penalty=0,
-#         presence_penalty=0
-#     )
 
-#     text = response.choices[0].text
-#     return Response({'text': text})
+openai.api_key = ''
+def summarize_text(text):
+        prompt = f"Please summarize the following text:\n\n{text}\n\nSummary:"
+        response = openai.Completion.create(
+            model="text-davinci-003",
+            prompt=prompt,
+            temperature=0.7,
+            max_tokens=256,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0
+        )
+        summary = response.choices[0].text.strip()
+        return summary
 
 
 @api_view(['POST'])
 def openai_api(request):
-    youtube_url = request.data.get('url')
-    loader = YoutubeLoader.from_youtube_url(youtube_url, add_video_info=True)
-    result = loader.load()
-    llm = OpenAI(temperature=0, openai_api_key='')
-    chain = load_summarize_chain(llm, chain_type="stuff", verbose=False)
-    chain.run(result)
-    return Response(str(result))
+    video_id = 'uKrnx81zdnQ'
+    transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
+    text_list = []
+    for transcript in transcript_list:
+        text_list.append(transcript['text'])
+
+    coherent_structure = ' '.join(text_list)
+
+    if len(coherent_structure.split()) > 1000:
+        chunks = [coherent_structure[i:i+1000] for i in range(0, len(coherent_structure), 1000)]
+        summaries = []
+        for chunk in chunks:
+            summary = summarize_text(chunk)
+            summaries.append(summary)
+        final_summary = summarize_text(' '.join(summaries))
+    else:
+        final_summary = summarize_text(coherent_structure)
+
+    return Response(final_summary)
