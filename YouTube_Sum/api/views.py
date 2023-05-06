@@ -36,7 +36,7 @@ def summarize_text(text):
 
 @api_view(['POST'])
 def openai_api(request):
-    video_id = 'uKrnx81zdnQ'
+    video_id = request.data.get('video_id')
     transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
     text_list = []
     for transcript in transcript_list:
