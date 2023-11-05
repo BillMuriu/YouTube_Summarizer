@@ -18,7 +18,7 @@ def apiOverview(request):
     return Response(api_urls)
 
 
-openai.api_key = ''
+openai.api_key = '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'
 def summarize_text(text):
         prompt = f"Please summarize the following text:\n\n{text}\n\nSummary:"
         response = openai.Completion.create(
